@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,11 @@ import {
 import { IconSymbol } from "../components/ui/IconSymbol";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store/store";
+import { WatchListState, addWatchList } from "@/store/watchListSlice";
+import { ThemeContext } from "@/theme/ThemeContext";
+import { Colors } from "@/constants/Colors";
 
 type Company = {
   id: string;
@@ -56,7 +61,13 @@ const DUMMY_WATCHLISTS = [
 ];
 
 const WatchlistScreen = () => {
-  const [watchlists, setWatchlists] = useState(DUMMY_WATCHLISTS);
+  const { theme } = useContext(ThemeContext);
+  const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const themed = Colors[colorKey];
+  const dispatch = useDispatch();
+  const watchlists = useSelector(
+    (state: RootState) => state.watchList.watchlists
+  );
   const [activeTab, setActiveTab] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [newListName, setNewListName] = useState("");
@@ -68,10 +79,15 @@ const WatchlistScreen = () => {
   // Loading state
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header onAdd={() => setShowModal(true)} />
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themed.background }]}
+      >
+        <Header onAdd={() => setShowModal(true)} themed={themed} />
         {[...Array(4)].map((_, i) => (
-          <View key={i} style={styles.skeletonCard} />
+          <View
+            key={i}
+            style={[styles.skeletonCard, { backgroundColor: themed.icon }]}
+          />
         ))}
       </SafeAreaView>
     );
@@ -80,34 +96,57 @@ const WatchlistScreen = () => {
   // Error state
   if (error) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header onAdd={() => setShowModal(true)} />
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themed.background }]}
+      >
+        <Header onAdd={() => setShowModal(true)} themed={themed} />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>Couldn't load watchlist</Text>
+          <Text style={[styles.errorText, { color: themed.icon }]}>
+            Couldn't load watchlist
+          </Text>
           <TouchableOpacity
-            style={styles.retryBtn}
+            style={[styles.retryBtn, { backgroundColor: themed.tint }]}
             onPress={() => setError(false)}
           >
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={[styles.retryText, { color: themed.background }]}>
+              Retry
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  const handleCreateWatchlist = () => {
+    if (typeof newListName === "string" && newListName?.trim()) {
+      dispatch(addWatchList(newListName?.trim()));
+      setShowModal(false);
+      setNewListName("");
+      setActiveTab(watchlists.length); // Switch to the new tab
+    }
+  };
+
+  // console.log(watchlists);
+
   // No watchlists
   if (!watchlists.length) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <Header onAdd={() => setShowModal(true)} />
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themed.background }]}
+      >
+        <Header onAdd={() => setShowModal(true)} themed={themed} />
         <View style={styles.centered}>
-          <IconSymbol name="bookmark.fill" size={48} color="#bbb" />
-          <Text style={styles.emptyText}>No watchlists yet</Text>
+          <IconSymbol name="bookmark.fill" size={48} color={themed.icon} />
+          <Text style={[styles.emptyText, { color: themed.icon }]}>
+            No watchlists yet
+          </Text>
           <TouchableOpacity
-            style={styles.addBtn}
+            style={[styles.addBtn, { backgroundColor: themed.tint }]}
             onPress={() => setShowModal(true)}
           >
-            <Text style={styles.addBtnText}>Create New Watchlist</Text>
+            <Text style={[styles.addBtnText, { color: themed.background }]}>
+              Create New Watchlist
+            </Text>
           </TouchableOpacity>
         </View>
         <AddModal
@@ -115,106 +154,170 @@ const WatchlistScreen = () => {
           onClose={() => setShowModal(false)}
           newListName={newListName}
           setNewListName={setNewListName}
+          onCreate={handleCreateWatchlist}
+          themed={themed}
         />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Header onAdd={() => setShowModal(true)} />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themed.background }]}
+    >
+      <Header onAdd={() => setShowModal(true)} themed={themed} />
       {/* Tabs */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.tabsRow}
       >
-        {watchlists.map((wl, idx) => (
-          <TouchableOpacity
-            key={wl.name}
-            style={[styles.tab, idx === activeTab && styles.tabActive]}
-            onPress={() => setActiveTab(idx)}
-          >
-            <Text
+        {watchlists?.map((wl, idx) => {
+          return (
+            <TouchableOpacity
+              key={wl.name}
               style={[
-                styles.tabText,
-                idx === activeTab && styles.tabTextActive,
+                styles.tab,
+                { backgroundColor: themed.icon },
+                idx === activeTab && { backgroundColor: themed.tint },
               ]}
+              onPress={() => setActiveTab(idx)}
             >
-              {wl.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: themed.text },
+                  idx === activeTab && {
+                    color: themed.background,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
+                {wl.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
       {/* Empty state for selected watchlist */}
       {stocks.length === 0 ? (
         <View style={styles.centered}>
-          <IconSymbol name="magnifyingglass" size={48} color="#bbb" />
-          <Text style={styles.emptyText}>No stocks in this watchlist</Text>
+          <IconSymbol name="magnifyingglass" size={48} color={themed.icon} />
+          <Text style={[styles.emptyText, { color: themed.icon }]}>
+            No stocks in this watchlist
+          </Text>
         </View>
       ) : (
         <FlatList
           data={stocks}
-          renderItem={({ item }) => <StockRow item={item} />}
-          keyExtractor={(item) => item.symbol}
+          renderItem={({ item }) => <StockRow item={item} themed={themed} />}
+          keyExtractor={(item, index) => item?.Symbol || index.toString()}
           contentContainerStyle={{ paddingBottom: 24 }}
-          ItemSeparatorComponent={() => <View style={styles.divider} />}
+          ItemSeparatorComponent={() => (
+            <View style={[styles.divider, { backgroundColor: themed.icon }]} />
+          )}
         />
       )}
-      {/* Floating Add Button */}
-      <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
-        <IconSymbol name="plus" size={28} color="#fff" />
-      </TouchableOpacity>
       {/* Add Modal */}
       <AddModal
         visible={showModal}
         onClose={() => setShowModal(false)}
         newListName={newListName}
         setNewListName={setNewListName}
+        onCreate={handleCreateWatchlist}
+        themed={themed}
       />
     </SafeAreaView>
   );
 };
 
-const Header = ({ onAdd }: { onAdd: () => void }) => (
-  <View style={styles.headerRow}>
-    <Text style={styles.headerTitle}>Watchlist</Text>
+const Header = ({ onAdd, themed }: { onAdd: () => void; themed: any }) => (
+  <View style={[styles.headerRow, { backgroundColor: themed.background }]}>
+    <Text style={[styles.headerTitle, { color: themed.text }]}>Watchlist</Text>
     <TouchableOpacity style={styles.headerAddBtn} onPress={onAdd}>
-      <IconSymbol name="plus" size={24} color="#1976d2" />
+      <IconSymbol name="plus" size={24} color={themed.tint} />
     </TouchableOpacity>
   </View>
 );
 
-const StockRow = ({ item }: { item: any }) => {
+const StockRow = ({ item, themed }: { item: any; themed: any }) => {
+  console.log("item here", item);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const isPositive = item.change.trim().startsWith("+");
+  // Support both possible property names for compatibility
+  const symbol = item.symbol || item.ticker || "";
+  const company = item.name || item.company || symbol;
+  const price = item.price || "-";
+  const change = item.change_percentage || item.change || "";
+  const logo = item.logo || item.image || "";
+  const id = item.id || symbol;
+  // Extract numeric value for color logic
+  let changeValue = 0;
+  if (typeof change === "string") {
+    // Try to extract the first number (handles both "+2.15 (+1.5%)" and "-15.30 (-2.1%)")
+    const match = change.match(/[-+]?\d*\.?\d+/);
+    if (match) changeValue = parseFloat(match[0]);
+  } else if (typeof change === "number") {
+    changeValue = change;
+  }
+  const isPositive = changeValue > 0;
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate("StockDetails", { ...item })}
-      style={styles.card}
+      onPress={() => {
+        // Map to expected Company shape for StockDetailsScreen
+        navigation.navigate("StockDetails", {
+          ticker: symbol,
+          price: price.toString(),
+          change_amount: typeof change === "string" ? change.split(" ")[0] : "",
+          change_percentage:
+            typeof change === "string" && change.includes("(")
+              ? change.split("(")[1].replace(")", "")
+              : "",
+          volume: "", // Not available in watchlist, pass empty string
+        });
+      }}
+      style={[
+        styles.card,
+        { backgroundColor: themed.background, shadowColor: themed.text },
+      ]}
       activeOpacity={0.8}
     >
       <View style={styles.leftCol}>
-        <Text style={styles.symbol}>{item.symbol}</Text>
-        <Text style={styles.company}>{item.name}</Text>
+        <Text style={[styles.symbol, { color: themed.text }]}>{symbol}</Text>
+        <Text style={[styles.company, { color: themed.icon }]}>{company}</Text>
       </View>
       <View style={styles.rightCol}>
-        <Text style={styles.price}>${item.price}</Text>
+        <Text style={[styles.price, { color: themed.text }]}>${price}</Text>
         <View style={styles.changeRow}>
           <IconSymbol
             name={isPositive ? "chevron.right" : "chevron.right"}
             size={14}
-            color={isPositive ? "#388e3c" : "#d32f2f"}
+            color={
+              isPositive
+                ? themed === "dark"
+                  ? "#4caf50"
+                  : "#388e3c"
+                : themed === "dark"
+                ? "#ff5252"
+                : "#d32f2f"
+            }
             style={{ transform: [{ rotate: isPositive ? "-90deg" : "90deg" }] }}
           />
           <Text
             style={[
               styles.change,
-              isPositive ? styles.positive : styles.negative,
+              {
+                color: isPositive
+                  ? themed === "dark"
+                    ? "#4caf50"
+                    : "#388e3c"
+                  : themed === "dark"
+                  ? "#ff5252"
+                  : "#d32f2f",
+              },
             ]}
           >
-            {item.change}
+            {change}
           </Text>
         </View>
       </View>
@@ -222,26 +325,76 @@ const StockRow = ({ item }: { item: any }) => {
   );
 };
 
-const AddModal = ({ visible, onClose, newListName, setNewListName }: any) => (
+const AddModal = ({
+  visible,
+  onClose,
+  newListName,
+  setNewListName,
+  onCreate,
+  themed,
+}: any) => (
   <Modal visible={visible} transparent animationType="slide">
     <View style={styles.modalOverlay}>
-      <View style={styles.modalBox}>
-        <Text style={styles.modalTitle}>Create New Watchlist</Text>
+      <View
+        style={[
+          styles.modalBox,
+          { backgroundColor: themed.background, shadowColor: themed.text },
+        ]}
+      >
+        <Text style={[styles.modalTitle, { color: themed.text }]}>
+          Create New Watchlist
+        </Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: themed.text,
+              backgroundColor: themed.background,
+              borderColor: themed.icon,
+            },
+          ]}
           placeholder="Watchlist Name"
+          placeholderTextColor={themed.icon}
           value={newListName}
           onChangeText={setNewListName}
         />
         <View style={styles.modalBtnRow}>
-          <TouchableOpacity style={styles.modalBtn} onPress={onClose}>
-            <Text style={styles.modalBtnText}>Cancel</Text>
-          </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.modalBtn, styles.modalBtnPrimary]}
+            style={[
+              styles.modalBtn,
+              {
+                backgroundColor:
+                  themed === "dark" ? themed.icon : themed.background,
+                borderWidth: 1,
+                borderColor: themed.icon,
+              },
+            ]}
             onPress={onClose}
           >
-            <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>
+            <Text
+              style={[
+                styles.modalBtnText,
+                { color: themed === "dark" ? themed.background : themed.text },
+              ]}
+            >
+              Cancel
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.modalBtn,
+              styles.modalBtnPrimary,
+              { backgroundColor: themed.tint },
+            ]}
+            onPress={onCreate}
+          >
+            <Text
+              style={[
+                styles.modalBtnText,
+                styles.modalBtnTextPrimary,
+                { color: themed.background },
+              ]}
+            >
               Create
             </Text>
           </TouchableOpacity>

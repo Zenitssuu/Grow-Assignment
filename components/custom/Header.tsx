@@ -8,13 +8,27 @@ import {
   Pressable,
   Keyboard,
 } from "react-native";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useContext } from "react";
+import { ThemeContext } from "@/theme/ThemeContext";
 import { IconSymbol } from "../ui/IconSymbol";
+import { useNavigation } from "@react-navigation/native";
+import { Colors } from "@/constants/Colors";
+import logo from "../../assets/images/logo.png";
+import { Image } from "expo-image";
 
 const COLLAPSED_WIDTH = 36;
 const EXPANDED_WIDTH = 180;
 
-const Header = () => {
+interface HeaderProps {
+  searchValue: string;
+  onSearchChange: (text: string) => void;
+}
+
+const Header = ({ searchValue, onSearchChange }: HeaderProps) => {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const themed = Colors[colorKey];
+  const navigation = useNavigation<any>();
   const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const widthAnim = useRef(new Animated.Value(COLLAPSED_WIDTH)).current;
@@ -34,18 +48,11 @@ const Header = () => {
     }
   }, [expanded]);
 
-  // Collapse when pressing outside
   const handleOutsidePress = () => {
     if (expanded) setExpanded(false);
   };
-
   const handleExpand = () => {
     if (!expanded) setExpanded(true);
-  };
-
-  const handleProfilePress = () => {
-    // Add your profile navigation logic here
-    console.log("Profile pressed");
   };
 
   return (
@@ -53,15 +60,15 @@ const Header = () => {
       onPress={handleOutsidePress}
       style={{ backgroundColor: "transparent" }}
     >
-      <View style={styles.container} pointerEvents="box-none">
-        {/* Logo on the left */}
+      <View
+        style={{ ...styles.container, borderBottomColor: themed.icon }}
+        pointerEvents="box-none"
+      >
         <View style={styles.logoContainer} pointerEvents="box-none">
-          <Text style={styles.logoText}>LOGO</Text>
+          <Image source={logo} style={styles.logoImage} />
+          <Text style={[styles.logoText, { color: themed.tint }]}>Grow</Text>
         </View>
-
-        {/* Right section with search and profile */}
         <View style={styles.rightSection} pointerEvents="box-none">
-          {/* Search container with fixed icon */}
           <View style={styles.searchWrapper}>
             <TouchableOpacity
               activeOpacity={1}
@@ -74,7 +81,11 @@ const Header = () => {
               <Animated.View
                 style={[
                   styles.searchContainer,
-                  { width: widthAnim },
+                  {
+                    width: widthAnim,
+                    backgroundColor: themed.background,
+                    borderColor: themed.icon,
+                  },
                   expanded
                     ? styles.searchContainerExpanded
                     : styles.searchContainerCollapsed,
@@ -83,30 +94,49 @@ const Header = () => {
                 {expanded ? (
                   <TextInput
                     ref={inputRef}
-                    style={styles.searchInput}
+                    style={[
+                      styles.searchInput,
+                      {
+                        color: themed.text,
+                        backgroundColor: themed.background,
+                        borderColor: themed.icon,
+                      },
+                    ]}
                     placeholder="Search..."
+                    placeholderTextColor={themed.icon}
+                    value={searchValue}
+                    onChangeText={onSearchChange}
                     onBlur={() => setExpanded(false)}
                     autoFocus
                   />
                 ) : null}
               </Animated.View>
             </TouchableOpacity>
-
-            {/* Fixed search icon positioned absolutely */}
             <View style={styles.searchIcon} pointerEvents="none">
-              <IconSymbol size={28} name="magnifyingglass" color={`black`} />
+              <IconSymbol
+                size={28}
+                name="magnifyingglass"
+                color={themed.icon}
+              />
             </View>
           </View>
-
-          {/* Profile icon */}
           <TouchableOpacity
-            style={styles.profileButton}
-            onPress={handleProfilePress}
+            style={[
+              styles.themeToggleBtn,
+              {
+                backgroundColor: themed.background,
+                borderColor: themed.icon,
+                borderWidth: 1,
+              },
+            ]}
+            onPress={toggleTheme}
             activeOpacity={0.7}
           >
-            <View style={styles.profileIconContainer}>
-              <IconSymbol size={24} name="person" color="black" />
-            </View>
+            <IconSymbol
+              size={24}
+              name={theme !== "dark" ? "sun.max" : "moon"}
+              color={theme !== "dark" ? "#FFD600" : themed.text}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -129,6 +159,14 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  logoImage: {
+    width: 25,
+    height: 25,
+    borderRadius: 10,
   },
   logoText: {
     fontSize: 20,
@@ -151,13 +189,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     overflow: "hidden",
     minHeight: 36,
-    // paddingHorizontal: 10,
-    // borderWidth:1,
     justifyContent: "flex-start",
+    // borderWidth: 1,
   },
   searchContainerCollapsed: {},
   searchContainerExpanded: {
@@ -177,18 +213,16 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 12,
-    color: "#222",
     paddingVertical: 0,
-    backgroundColor: "transparent",
-    borderWidth: 0.5,
+    borderWidth: 1,
     paddingTop: 5,
     paddingBottom: 5,
     borderRadius: 10,
-    marginRight:10
+    marginRight: 10,
   },
   profileButton: {
     padding: 5,
-    marginBottom:2,
+    marginBottom: 2,
     // borderRadius: 20,
     backgroundColor: "#f8f9fa",
     borderWidth: 2,
@@ -199,5 +233,11 @@ const styles = StyleSheet.create({
   profileIconContainer: {
     justifyContent: "center",
     alignItems: "center",
+  },
+  themeToggleBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#e0e0e0",
+    marginLeft: 8,
   },
 });

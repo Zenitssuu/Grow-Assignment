@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useContext } from "react";
+import { Colors } from "@/constants/Colors";
 import {
   StyleSheet,
   Text,
@@ -8,9 +9,10 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
-
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { IconSymbol } from "../ui/IconSymbol";
+import { tickerToCompanyName } from "../../constants/CompanyNames";
+import { ThemeContext } from "@/theme/ThemeContext";
 
 type RootStackParamList = {
   TopStocksScreen: { title: string };
@@ -18,76 +20,24 @@ type RootStackParamList = {
 };
 
 type Company = {
-  id: string;
-  name: string;
-  logo: string;
+  ticker: string;
   price: string;
+  change_percentage: string;
+  change_amount: string;
 };
 
 type DataSectionProps = {
   title?: string;
   data?: Company[];
-  onViewAll?: () => void;
+  search?: string;
 };
 
-const DUMMY_DATA: Company[] = [
-  {
-    id: "1",
-    name: "Apple",
-    logo: "https://logo.clearbit.com/apple.com",
-    price: "$192.32",
-  },
-  {
-    id: "2",
-    name: "Google",
-    logo: "https://logo.clearbit.com/google.com",
-    price: "$134.56",
-  },
-  {
-    id: "3",
-    name: "Amazon",
-    logo: "https://logo.clearbit.com/amazon.com",
-    price: "$3,456.78",
-  },
-  {
-    id: "4",
-    name: "Microsoft",
-    logo: "https://logo.clearbit.com/microsoft.com",
-    price: "$312.45",
-  },
-  {
-    id: "5",
-    name: "Uber",
-    logo: "https://logo.clearbit.com/uber.com",
-    price: "$312.45",
-  },
-  {
-    id: "6",
-    name: "Swiggy",
-    logo: "https://logo.clearbit.com/swiggy.com",
-    price: "$312.45",
-  },
-  {
-    id: "7",
-    name: "Open AI",
-    logo: "https://logo.clearbit.com/openai.com",
-    price: "$312.45",
-  },
-  {
-    id: "8",
-    name: "Oracle",
-    logo: "https://logo.clearbit.com/oracle.com",
-    price: "$312.45",
-  },
-];
-
-const DataSection = ({
-  title = "Top Gainer",
-  data = DUMMY_DATA,
-  onViewAll,
-}: DataSectionProps) => {
+const DataSection = ({ title = "Top Gainer", data = [], search = "" }: DataSectionProps) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { theme } = useContext(ThemeContext);
+  const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const themed = Colors[colorKey];
 
   // Placeholder navigation handler
   const handleViewAll = () => {
@@ -96,33 +46,75 @@ const DataSection = ({
 
   const handleCardPress = (company: Company) => {
     // @ts-ignore
+    console.log("company", company);
     navigation.navigate("StockDetails", { ...company });
   };
 
-  const renderCompanyItem = ({ item }: { item: Company }) => (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={0.8}
-      onPress={() => handleCardPress(item)}
-    >
-      <View>
-        <Image
-          source={item.logo}
-          style={styles.logo}
-          contentFit="cover"
-          transition={300}
-          cachePolicy="memory-disk"
-        />
-        <Text style={styles.companyName} numberOfLines={2}>
-          {item.name}
-        </Text>
-      </View>
-      <View>
-        <Text style={styles.price}>{item.price}</Text>
-        <Text style={styles.rate}>+61(2.87%)</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderCompanyItem = ({ item }: { item: Company }) => {
+    // console.log(item);
+    const companyName =
+      tickerToCompanyName[item?.ticker]?.split(" ")[0] ?? item.ticker;
+
+    const companyLogo =
+      tickerToCompanyName[item?.ticker]?.split(" ")[0] ?? "Company";
+    return (
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            backgroundColor: themed.background,
+            borderColor: themed.icon,
+            shadowColor: themed.text,
+          },
+        ]}
+        activeOpacity={0.8}
+        onPress={() => handleCardPress(item)}
+      >
+        <View>
+          <Image
+            source={`https://logo.clearbit.com/${companyLogo}.com`}
+            style={styles.logo}
+            contentFit="cover"
+            transition={300}
+            cachePolicy="memory-disk"
+          />
+          <Text
+            style={[styles.companyName, { color: themed.text }]}
+            numberOfLines={2}
+          >
+            {companyName}
+          </Text>
+        </View>
+        <View>
+          <Text style={[styles.price, { color: themed.text }]}>
+            ${item.price}
+          </Text>
+          <Text
+            style={[
+              styles.rate,
+              {
+                color:
+                  title === "Top Gainer"
+                    ? theme === "dark"
+                      ? "#4caf50"
+                      : "#388e3c"
+                    : theme === "dark"
+                    ? "#ff5252"
+                    : "#ff0000ff",
+              },
+            ]}
+          >
+            {title === "Top Gainer" ? "+" : ""}
+            {item.change_amount} (
+            {title === "Top Gainer"
+              ? item.change_percentage
+              : item.change_percentage.split("-")[1]}
+            )
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderViewMoreCard = () => {
     // Get remaining companies after the first 3 for the logo preview
@@ -130,23 +122,38 @@ const DataSection = ({
 
     return (
       <TouchableOpacity
-        style={styles.viewMoreCard}
+        style={[
+          styles.viewMoreCard,
+          {
+            backgroundColor: themed.background,
+            borderColor: themed.icon,
+            shadowColor: themed.text,
+          },
+        ]}
         activeOpacity={0.8}
         onPress={handleViewAll}
       >
         <View style={styles.viewMoreContent}>
           <View style={styles.logoGrid}>
-            {remainingCompanies.map((company, index) => (
-              <View key={company.id || index} style={styles.logoGridItem}>
-                <Image
-                  source={company.logo}
-                  style={styles.gridLogo}
-                  contentFit="cover"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                />
-              </View>
-            ))}
+            {remainingCompanies.map((company, index) => {
+              const companyName =
+                tickerToCompanyName[company?.ticker]?.split(" ")[0] ??
+                "Company";
+              return (
+                <View key={company.ticker || index} style={styles.logoGridItem}>
+                  <Image
+                    source={
+                      `https://logo.clearbit.com/${companyName}.com` ||
+                      `https://logo.clearbit.com/nexalin.com`
+                    }
+                    style={styles.gridLogo}
+                    contentFit="cover"
+                    transition={200}
+                    cachePolicy="memory-disk"
+                  />
+                </View>
+              );
+            })}
             {/* Fill empty slots if less than 4 companies */}
             {Array.from({ length: 4 - remainingCompanies.length }).map(
               (_, index) => (
@@ -157,39 +164,53 @@ const DataSection = ({
             )}
           </View>
           <View style={styles.viewMoreTextContainer}>
-            <Text style={styles.viewMoreText}>See more</Text>
-            <IconSymbol name="chevron.right" size={20} color={"#666"} />
+            <Text style={[styles.viewMoreText, { color: themed.text }]}>
+              See more
+            </Text>
+            <IconSymbol
+              style={styles.viewMoreIcon}
+              name="chevron.right"
+              size={20}
+              color={themed.icon}
+            />
           </View>
         </View>
       </TouchableOpacity>
     );
   };
 
-  // Create grid data with view more card
-  const gridData = [
-    ...data.slice(0, 3),
-    { id: "view-more", type: "view-more" },
-  ];
+  // If searching, just show all matched stocks (no view more)
+  const gridData = search
+    ? data
+    : [
+        ...data.slice(0, 3),
+        { id: "view-more", type: "view-more" },
+      ];
 
   const renderGridItem = ({ item, index }: { item: any; index: number }) => {
-    if (item.type === "view-more") {
+    if (!search && item.type === "view-more") {
       return renderViewMoreCard();
     }
     return renderCompanyItem({ item });
   };
 
+  // console.log(data.length);
+
   return (
-    <View style={styles.section}>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {/* <TouchableOpacity onPress={handleViewAll} style={styles.viewAllBtn}>
-          <Text style={styles.viewAllText}>View All</Text>
-        </TouchableOpacity> */}
-      </View>
+    <View style={[styles.section, { backgroundColor: themed.background }]}> 
+      {!search && (
+        <View style={styles.headerRow}>
+          <Text style={[styles.sectionTitle, { color: themed.text }]}> 
+            {title}
+          </Text>
+        </View>
+      )}
       <FlatList
         data={gridData}
         renderItem={renderGridItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) =>
+          "ticker" in item ? item.ticker : index.toString()
+        }
         numColumns={2}
         columnWrapperStyle={styles.row}
         scrollEnabled={false}
@@ -264,7 +285,8 @@ const styles = StyleSheet.create({
   },
   rate: {
     fontSize: 11,
-    color: "#388e3c",
+    // color: "#388e3c",
+    fontWeight: "600",
   },
   companyName: {
     fontSize: 14,
@@ -330,14 +352,19 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
-    alignItems:"center",
-    gap:0
+    alignItems: "center",
+    gap: -5,
+    marginTop: 15,
   },
   viewMoreText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "700",
     color: "#666",
     // textAlign: "center",
     // textDecorationLine: "underline",
+  },
+  viewMoreIcon: {
+    marginLeft: -1,
+    marginTop: 2,
   },
 });

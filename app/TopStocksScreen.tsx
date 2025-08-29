@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,19 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+// import { useGetTopGainerLoserList } from "@/hooks/stocks.hook";
 import { IconSymbol } from "../components/ui/IconSymbol";
+import { Ionicons } from "@expo/vector-icons";
+import { ThemeContext } from "@/theme/ThemeContext";
+import { Colors } from "@/constants/Colors";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 type StockItem = {
-  symbol: string;
-  name: string;
+  ticker: string;
   price: string;
-  change: string;
+  change_amount: string;
+  change_percentage: string;
 };
 type Company = {
   id: string;
@@ -27,70 +33,74 @@ type TopStocksScreenRouteParams = {
   title?: string;
 };
 
-const DUMMY_DATA_GAINERS: StockItem[] = [
-  {
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    price: "145.30",
-    change: "+2.15 (+1.5%)",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    price: "720.50",
-    change: "+15.30 (+2.1%)",
-  },
-  {
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    price: "2725.60",
-    change: "+30.10 (+1.1%)",
-  },
-  {
-    symbol: "MSFT",
-    name: "Microsoft Corp.",
-    price: "299.10",
-    change: "+5.20 (+1.8%)",
-  },
-];
-const DUMMY_DATA_LOSERS: StockItem[] = [
-  {
-    symbol: "NFLX",
-    name: "Netflix Inc.",
-    price: "510.20",
-    change: "-12.50 (-2.4%)",
-  },
-  {
-    symbol: "AMZN",
-    name: "Amazon.com Inc.",
-    price: "3342.88",
-    change: "-22.10 (-0.7%)",
-  },
-];
+const PAGE_SIZE = 10;
 
 const TopStocksScreen = () => {
+  // console.log("here");
+  const stockList = useSelector((state: RootState) => state.stockList);
+
   const navigation = useNavigation();
+  const { theme } = useContext(ThemeContext);
+  const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const themed = Colors[colorKey];
   const route =
     useRoute<RouteProp<Record<string, TopStocksScreenRouteParams>, string>>();
   const title = route.params?.title || "Top Gainers";
   const isGainers = title !== "Top Losers";
+
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [data, setData] = useState<StockItem[]>(
-    isGainers ? DUMMY_DATA_GAINERS : DUMMY_DATA_LOSERS
-  );
   const [showEmpty, setShowEmpty] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
-  const handleLoadMore = () => {
-    // Dummy: just set empty for demo
-    setShowEmpty(true);
-    setData([]);
-  };
+  // console.log(data.length);
+
+  // Use paginated hook
+  // const { stockData, isLoading, isError, isSuccess } = useGetTopGainerLoserList(
+  //   page,
+  //   PAGE_SIZE
+  // );
+
+  // console.log(stockData)
+
+  // Append new data when stockData changes
+  useEffect(() => {
+    // if (isSuccess && stockData) {
+    //   // const newItems = isGainers ? stockData.top_gainers : stockData.top_losers;
+    //   const newItems = isGainers ? TOP_GAINERS_DATA : TOP_LOSERS_DATA;
+
+    //   if (page === 1) {
+    //     setData(newItems);
+    //   } else {
+    //     setData((prev) => [...prev, ...newItems]);
+    //   }
+    //   setShowEmpty(newItems.length === 0 && page === 1);
+    // }
+
+    if (stockList) {
+      const newItems = isGainers ? stockList.top_gainers : stockList.top_losers;
+
+      if (page === 1) {
+        setData(newItems);
+      } else {
+        setData((prev) => [...prev, ...newItems]);
+      }
+      setShowEmpty(newItems.length === 0 && page === 1);
+    }
+  }, [page, isGainers]);
+
+  // // Error and loading handling
+  // useEffect(() => {
+  //   setLoading(isLoading);
+  //   setError(isError);
+  // }, [isLoading, isError]);
 
   const handleRetry = () => {
     setError(false);
     setLoading(false);
-    setData(isGainers ? DUMMY_DATA_GAINERS : DUMMY_DATA_LOSERS);
+    setPage(1);
   };
 
   const handleCardPress = (stock: StockItem) => {
@@ -99,24 +109,38 @@ const TopStocksScreen = () => {
   };
 
   const renderItem = ({ item }: { item: StockItem }) => {
-    const isPositive = item.change.trim().startsWith("+");
+    const isPositive = item?.change_amount[0] !== "-";
     return (
       <TouchableOpacity
         onPress={() => handleCardPress(item)}
-        style={styles.card}
+        style={[
+          styles.card,
+          { backgroundColor: themed.background, shadowColor: themed.text },
+        ]}
         activeOpacity={0.8}
       >
         <View style={styles.leftCol}>
-          <Text style={styles.symbol}>{item.symbol}</Text>
-          <Text style={styles.company}>{item.name}</Text>
+          <Text style={[styles.symbol, { color: themed.text }]}>
+            {item.ticker}
+          </Text>
         </View>
         <View style={styles.rightCol}>
-          <Text style={styles.price}>${item.price}</Text>
+          <Text style={[styles.price, { color: themed.text }]}>
+            ${item.price}
+          </Text>
           <View style={styles.changeRow}>
             <IconSymbol
               name={isPositive ? "chevron.right" : "chevron.right"}
               size={14}
-              color={isPositive ? "#388e3c" : "#d32f2f"}
+              color={
+                isPositive
+                  ? theme === "dark"
+                    ? "#4caf50"
+                    : "#388e3c"
+                  : theme === "dark"
+                  ? "#ff5252"
+                  : "#d32f2f"
+              }
               style={{
                 transform: [{ rotate: isPositive ? "-90deg" : "90deg" }],
               }}
@@ -124,10 +148,18 @@ const TopStocksScreen = () => {
             <Text
               style={[
                 styles.change,
-                isPositive ? styles.positive : styles.negative,
+                {
+                  color: isPositive
+                    ? theme === "dark"
+                      ? "#4caf50"
+                      : "#388e3c"
+                    : theme === "dark"
+                    ? "#ff5252"
+                    : "#d32f2f",
+                },
               ]}
             >
-              {item.change}
+              {item.change_percentage}
             </Text>
           </View>
         </View>
@@ -136,11 +168,19 @@ const TopStocksScreen = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (loading && page === 1) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { paddingTop: 30, backgroundColor: themed.background },
+        ]}
+      >
         {[...Array(4)].map((_, i) => (
-          <View key={i} style={styles.skeletonCard} />
+          <View
+            key={i}
+            style={[styles.skeletonCard, { backgroundColor: themed.icon }]}
+          />
         ))}
       </SafeAreaView>
     );
@@ -149,50 +189,179 @@ const TopStocksScreen = () => {
   // Error state
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: themed.background }]}
+      >
         <View style={styles.centered}>
-          <Text style={styles.errorText}>Something went wrong.</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={handleRetry}>
-            <Text style={styles.retryText}>Retry</Text>
+          <Text style={[styles.errorText, { color: themed.icon }]}>
+            Something went wrong.
+          </Text>
+          <TouchableOpacity
+            style={[styles.retryBtn, { backgroundColor: themed.tint }]}
+            onPress={handleRetry}
+          >
+            <Text style={[styles.retryText, { color: themed.background }]}>
+              Retry
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
+  // console.log(data.length);
 
   // Empty state
   if (showEmpty || data.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: themed.background }]}
+      >
         <View style={styles.centered}>
-          <IconSymbol name="magnifyingglass" size={48} color="#bbb" />
-          <Text style={styles.emptyText}>No stocks available in this list</Text>
+          <IconSymbol name="magnifyingglass" size={48} color={themed.icon} />
+          <Text style={[styles.emptyText, { color: themed.icon }]}>
+            No stocks available in this list
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // Infinite scroll handler
+  // const handleEndReached = () => {
+  //   if (!loading && stockData) {
+  //     const total = isGainers
+  //       ? stockData.total_gainers
+  //       : stockData.total_losers;
+  //     if (data.length < total) {
+  //       setPage((prev) => prev + 1);
+  //     }
+  //   }
+  // };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.columnHeaderRow}>
-        <Text style={styles.columnHeaderLeft}>Company</Text>
-        <Text style={styles.columnHeaderRight}>Market Price</Text>
-      </View>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.symbol}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        ItemSeparatorComponent={() => <View style={styles.divider} />}
-      />
-      <TouchableOpacity style={styles.loadMoreBtn} onPress={handleLoadMore}>
-        <Text style={styles.loadMoreText}>Load More</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+    <>
+      {/* <SafeAreaView style={styles.safeHeaderArea}>
+        <View style={styles.customHeader}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.headerBtn}
+          >
+            <Ionicons name="arrow-back" size={24} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.PageTitle}>{title}</Text>
+          <View style={{ flex: 1 }} />
+        </View>
+      </SafeAreaView> */}
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: themed.background }]}
+      >
+        <View
+          style={[
+            styles.safeHeaderArea,
+            { backgroundColor: themed.background },
+          ]}
+        >
+          <View
+            style={[
+              styles.customHeader,
+              {
+                backgroundColor: themed.background,
+                borderBottomColor: themed.icon,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => navigation.goBack()}
+            >
+              <IconSymbol
+                name="chevron.right"
+                size={24}
+                color={themed.text}
+                style={{ transform: [{ rotate: "180deg" }] }}
+              />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: themed.text }]}>
+              {title}
+            </Text>
+            <View style={{ width: 32 }} />
+          </View>
+        </View>
+
+        <View style={styles.columnHeaderRow}>
+          <Text style={[styles.columnHeaderLeft, { color: themed.icon }]}>
+            Company
+          </Text>
+          <Text style={[styles.columnHeaderRight, { color: themed.icon }]}>
+            Market Price
+          </Text>
+        </View>
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.ticker}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          ItemSeparatorComponent={() => (
+            <View style={[styles.divider, { backgroundColor: themed.icon }]} />
+          )}
+          // onEndReached={() => {
+          //   if (hasScrolled) handleEndReached();
+          // }}
+          // onScroll={() => {
+          //   if (!hasScrolled) setHasScrolled(true);
+          // }}
+          // onEndReachedThreshold={0.5}
+          // ListFooterComponent={
+          //   loading && page > 1 ? (
+          //     <View
+          //       style={[styles.skeletonCard, { backgroundColor: themed.icon }]}
+          //     />
+          //   ) : null
+          // }
+        />
+      </SafeAreaView>
+    </>
   );
 };
 
+const COLORS = {
+  bg: "#fff",
+  text: "#111827",
+  subtle: "#6B7280",
+  border: "#E5E7EB",
+  pillBg: "#F3F4F6",
+  priceUp: "#16A34A",
+  priceDown: "#ff0000ff",
+  cardBg: "#FFFFFF",
+  shadow: "rgba(0,0,0,0.05)",
+};
+
 const styles = StyleSheet.create({
+  safeHeaderArea: {
+    backgroundColor: "#fff",
+  },
+  PageTitle: {
+    fontSize: 18,
+    // fontWeight: "regular",
+  },
+  content: { padding: 16, paddingBottom: 32 },
+  customHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 8,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    elevation: 2,
+    zIndex: 10,
+  },
+  headerBtn: {
+    padding: 6,
+    borderRadius: 20,
+  },
   columnHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
