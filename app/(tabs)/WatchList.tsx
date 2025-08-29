@@ -2,12 +2,12 @@ import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import WatchlistScreen from '../WatchlistScreen'
 
-const Explore = () => {
+const Watchlist = () => {
   return (
     <WatchlistScreen />
   )
 }
 
-export default Explore
+export default Watchlist
 
 const styles = StyleSheet.create({})

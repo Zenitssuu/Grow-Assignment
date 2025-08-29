@@ -10,7 +10,7 @@ import {
 import { LineChart, LineChartBicolor } from "react-native-gifted-charts";
 import { ThemeContext } from "@/theme/ThemeContext";
 import { Colors } from "@/constants/Colors";
-import { day, daily } from "../../assets/intraday";
+import { day, daily } from "../../constants/Intraday";
 import { parseIntradayData } from "../../utils/parseIntraday";
 import { parseDailyData } from "../../utils/parseDaily";
 
