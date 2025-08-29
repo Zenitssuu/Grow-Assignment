@@ -256,12 +256,14 @@ import { RootState } from "@/store/store";
 //   },
 // ];
 
-const Home = () => {
+const HomeScreen = () => {
   const { theme } = useContext(ThemeContext);
   const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
   const themed = Colors[colorKey];
   const [search, setSearch] = useState("");
-  const { top_gainers, top_losers } = useSelector((state: RootState) => state.stockList);
+  const { top_gainers, top_losers } = useSelector(
+    (state: RootState) => state.stockList
+  );
 
   // Filter logic: search by ticker or price (case-insensitive)
   const filterStocks = (arr: any[]) =>
@@ -285,14 +287,22 @@ const Home = () => {
       >
         <Header searchValue={search} onSearchChange={setSearch} />
         <View style={{ paddingLeft: 8, paddingRight: 8 }}>
-          <DataSection title="Top Gainer" data={filteredGainers} search={search} />
-          <DataSection title="Top Losers" data={filteredLosers} search={search} />
+          <DataSection
+            title="Top Gainer"
+            data={filteredGainers}
+            search={search}
+          />
+          <DataSection
+            title="Top Losers"
+            data={filteredLosers}
+            search={search}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-export default Home;
+export default HomeScreen;
 
 const styles = StyleSheet.create({});

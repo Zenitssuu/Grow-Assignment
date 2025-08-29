@@ -1,11 +1,11 @@
 import { View, Text } from "react-native";
 import React from "react";
-import Home from "@/components/custom/Home";
+import HomeScreen from "@/components/custom/HomeScreen";
 import { useGetTopGainerLoser } from "@/hooks/stocks.hook";
 import { useDispatch } from "react-redux";
 import { setList } from "@/store/topList";
 
-const HomeScreen = () => {
+const Home = () => {
   const dispatch = useDispatch();
   const { stockData, isLoading, isError, error, isSuccess } =
     useGetTopGainerLoser();
@@ -164,7 +164,7 @@ const HomeScreen = () => {
     dispatch(setList({ top_losers, top_gainers }));
   }
 
-  return <Home />;
+  return <HomeScreen />;
 };
 
-export default HomeScreen;
+export default Home;

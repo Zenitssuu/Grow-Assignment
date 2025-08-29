@@ -17,7 +17,7 @@ const config: ExpoConfig = {
   },
 
   android: {
-    package: "com.zenitssuu.growstock", 
+    package: "com.zenitssuu.growstock",
     adaptiveIcon: {
       foregroundImage: "./assets/images/logo.png",
       // backgroundColor: "#ffffff",
@@ -52,9 +52,10 @@ const config: ExpoConfig = {
     BASE_URL: process.env.BASE_URL,
     API_KEY: process.env.API_KEY,
     eas: {
-      projectId: "0b0680b3-9ca2-47f4-9784-00cab1b7dc5a"
+      projectId: "ff7c892b-1921-442f-9710-52d8322f1a9c"
     }
   },
+  owner: "sidsaiba2703",
 };
 
 export default config;
