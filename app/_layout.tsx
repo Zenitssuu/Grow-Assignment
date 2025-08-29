@@ -26,9 +26,9 @@ export default function RootLayout() {
     return null;
   }
 
-  // if (!authenticated) {
-  //   return <BiometricAuth onSuccess={() => setAuthenticated(true)} />;
-  // }
+  if (!authenticated) {
+    return <BiometricAuth onSuccess={() => setAuthenticated(true)} />;
+  }
 
   return (
     <Provider store={store}>

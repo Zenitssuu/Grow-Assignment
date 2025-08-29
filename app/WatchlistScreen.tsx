@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
-import { WatchListState, addWatchList } from "@/store/watchListSlice";
+import { addWatchList } from "@/store/watchListSlice";
 import { ThemeContext } from "@/theme/ThemeContext";
 import { Colors } from "@/constants/Colors";
 
@@ -31,34 +31,6 @@ type RootStackParamList = {
   TopStocksScreen: { title: string };
   StockDetails: Company;
 };
-
-const DUMMY_WATCHLISTS = [
-  {
-    name: "Default",
-    stocks: [
-      {
-        symbol: "AAPL",
-        name: "Apple Inc.",
-        price: "145.30",
-        change: "+2.15 (+1.5%)",
-      },
-      {
-        symbol: "TSLA",
-        name: "Tesla Inc.",
-        price: "720.50",
-        change: "-15.30 (-2.1%)",
-      },
-    ],
-  },
-  {
-    name: "Tech",
-    stocks: [],
-  },
-  {
-    name: "Long-Term",
-    stocks: [],
-  },
-];
 
 const WatchlistScreen = () => {
   const { theme } = useContext(ThemeContext);

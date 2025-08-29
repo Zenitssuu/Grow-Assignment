@@ -11,18 +11,15 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
-import ChartSection from "./ChartSection";
+import { Ionicons } from "@expo/vector-icons";
 import { IconSymbol } from "../ui/IconSymbol";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { addStock, addWatchList, removeStock } from "@/store/watchListSlice";
-import { tickerToCompanyName } from "@/constants/CompanyNames";
 import { useGetStockDetails } from "@/hooks/stocks.hook";
 import SkeletonLoader from "./SkeletonLoader";
 import { Image } from "expo-image";
-import { sampleStockDetails } from "../../assets/data";
 import { ThemeContext } from "@/theme/ThemeContext";
 import { Colors } from "@/constants/Colors";
 import TemporaryChart from "./temporaryChart";
@@ -302,7 +299,10 @@ export default function DetailsScreen() {
         <View
           style={[
             styles.detailsCard,
-            { backgroundColor: themed.background, borderColor: themed.borderColor },
+            {
+              backgroundColor: themed.background,
+              borderColor: themed.borderColor,
+            },
           ]}
         >
           {/* About Section Title */}

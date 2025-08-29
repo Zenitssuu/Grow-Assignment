@@ -16,7 +16,7 @@ export default function BiometricAuth({ onSuccess }: { onSuccess: () => void }) 
         return;
       }
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate with fingerprint",
+        promptMessage: "Authenticate",
       });
       setLoading(false);
       if (result.success) {

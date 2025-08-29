@@ -176,9 +176,7 @@ export default function ChartSection() {
             showYAxisIndices={false}
             showFractionalValues={false}
             curved
-            curveType={2}
             curvature={0.9}
-            thickness={3}
             dataPointsColor={pointColor}
             dataPointsRadius={2}
             dataPointsWidth={1}
