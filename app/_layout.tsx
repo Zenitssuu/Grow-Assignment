@@ -62,12 +62,12 @@ export default function RootLayout() {
                         headerShown: false,
                       })}
                     />
-                    <Stack.Screen
+                    {/* <Stack.Screen
                       name="ProfileScreen"
                       options={() => ({
                         title: "User Profile",
                       })}
-                    />
+                    /> */}
                     <Stack.Screen name="+not-found" />
                   </Stack>
                   <StatusBar style={theme === "dark" ? "light" : "dark"} />

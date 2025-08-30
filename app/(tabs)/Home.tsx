@@ -1,14 +1,44 @@
-import { View, Text } from "react-native";
-import React from "react";
-import HomeScreen from "@/components/custom/HomeScreen";
+import { View, Text, ScrollView } from "react-native";
+import React, { useContext, useState } from "react";
 import { useGetTopGainerLoser } from "@/hooks/stocks.hook";
 import { useDispatch } from "react-redux";
 import { setList } from "@/store/topList";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "@/components/custom/Header";
+import DataSection from "@/components/custom/DataSection";
+import { ThemeContext } from "@/theme/ThemeContext";
+import { Colors } from "@/constants/Colors";
 
 const Home = () => {
+  // All hooks must be called unconditionally at the top
   const dispatch = useDispatch();
-  const { stockData, isLoading, isError, error, isSuccess } =
-    useGetTopGainerLoser();
+  const { stockData, isLoading, isError, error, isSuccess } = useGetTopGainerLoser();
+  const { theme } = useContext(ThemeContext);
+  const colorKey: "light" | "dark" = theme === "dark" ? "dark" : "light";
+  const themed = Colors[colorKey];
+  const [search, setSearch] = useState("");
+
+  // Filter logic: search by ticker or price (case-insensitive)
+  const filterStocks = (arr: any[]) =>
+    arr.filter(
+      (item) =>
+        item.ticker?.toLowerCase().includes(search.toLowerCase()) ||
+        item.price?.toLowerCase().includes(search.toLowerCase())
+    );
+
+  // Default values to avoid errors before data loads
+  const top_gainers = stockData?.top_gainers || [];
+  const top_losers = stockData?.top_losers || [];
+
+  // Set Redux list when data is loaded
+  React.useEffect(() => {
+    if (isSuccess) {
+      dispatch(setList({ top_losers, top_gainers }));
+    }
+  }, [isSuccess, dispatch, top_gainers, top_losers]);
+
+  const filteredGainers = search ? filterStocks(top_gainers) : top_gainers;
+  const filteredLosers = search ? filterStocks(top_losers) : top_losers;
 
   if (isLoading) {
     // Skeleton loader for HomeScreen
@@ -158,13 +188,31 @@ const Home = () => {
     );
   }
 
-  const { top_gainers, top_losers } = stockData;
-
-  if (isSuccess) {
-    dispatch(setList({ top_losers, top_gainers }));
-  }
-
-  return <HomeScreen />;
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: themed.background }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 64,
+          backgroundColor: themed.background,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Header searchValue={search} onSearchChange={setSearch} />
+        <View style={{ paddingLeft: 8, paddingRight: 8 }}>
+          <DataSection
+            title="Top Gainer"
+            data={filteredGainers}
+            search={search}
+          />
+          <DataSection
+            title="Top Losers"
+            data={filteredLosers}
+            search={search}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 };
 
 export default Home;
